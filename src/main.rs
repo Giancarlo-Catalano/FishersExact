@@ -157,9 +157,17 @@ impl VIN {
             vin.multiply_by_n_factorial(row_sum);
         }
 
+        // multiply by col sums
         for &col_sum in sums.col_sums.iter() {
-            vin.divide_by_n_factorial(col_sum);
+            vin.multiply_by_n_factorial(col_sum);
         }
+
+        // divide by table items
+        for &item in matrix.rows.iter().flatten() {
+            vin.divide_by_n_factorial(item);
+        }
+
+        // divide by total
         vin.divide_by_n_factorial(sums.total_sum);
         vin
     }
@@ -291,15 +299,15 @@ fn main() {
 
 
     let matrix = CoOccurrenceMatrix::from_elements(
-        vec![vec![1, 2],
-                  vec![3, 4]]
+        vec![vec![0, 10],
+                  vec![12, 2]]
     );
 
     let matrix_sums = matrix.get_sums();
     let primes = get_primes_until(matrix_sums.total_sum);
 
 
-    println!("matrix = {}", matrix);
+    println!("matrix = \n4{}", matrix);
     println!("sums = {:?}", matrix.get_sums());
 
     let vin = VIN::from_CoOccurrenceMatrix(&matrix);
