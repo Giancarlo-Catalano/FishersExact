@@ -1,6 +1,8 @@
 // This will be a simple script to calculate Fisher's Exact test.
 
 use std::fmt;
+use std::fmt::Display;
+use std::path::Component::ParentDir;
 
 fn get_primes_until(n: i32) -> Vec<i32> {
     // Implements a Sieve of Eratostenes
@@ -120,6 +122,10 @@ impl VIN {
         VIN{powers: vec![0; capacity]}
     }
 
+    fn max_base_inclusive(&self) -> i32 {
+        return (self.powers.len() as i32 ) + 1;
+    }
+
     fn multiply_by_n_factorial(&mut self, n: i32) -> () {
         if n < 1 {
             panic!("Cannot call multiply_by_n_factorial({})", n);
@@ -182,20 +188,93 @@ impl fmt::Display for VIN {
     }
 }
 
+struct VIP {
+    // vector of integers, these being powers of primes
+    // the first prime is 2
+    powers: Vec<i32>,
+}
+
+impl Display for VIP {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // we calculate the primes here, but that is very bad.
+        let primes = get_primes_until(100);
+        // just for debug!
+
+        let mut numerator = 1;
+        let mut denominator = 1;
+        for (index, &power) in self.powers.iter().enumerate() {
+            if power != 0 {
+                let prime = primes[index];
+                if power > 0 {
+                    for _ in 0..power {
+                        numerator *= prime;
+                    }
+                }
+                else {
+                    for _ in 0..(-1*power) {
+                        denominator *= prime;
+                    }
+                }
+            }
+        }
+        writeln!(f, "{}/{}", numerator, denominator)
+    }
+}
+
+impl VIP {
+    fn from_VIN(vin: &VIN) -> VIP {
+        // first, we calculate what primes we need
+        let primes = get_primes_until(vin.max_base_inclusive());
+        let mut vip = VIP{powers: vec![0; primes.len()]};
+        for (vin_index, &vin_power) in vin.powers.iter().enumerate() {
+            let natural: i32 = (vin_index as i32) + 2;
+            for (prime_index, &prime) in primes.iter().enumerate() {
+                if natural % prime == 0 {
+                    // first we need to count how many times it fits
+                    let mut prime_power_multiplier = {
+                        let mut temp_power = 0;
+                        let mut temp_natural = natural;
+                        while temp_natural % prime == 0 {
+                            temp_natural /= prime;
+                            temp_power += 1;
+                        }
+                        temp_power
+                    };
+                    vip.powers[prime_index] += vin_power * prime_power_multiplier;
+                }
+            }
+        }
+
+        vip
+    }
+}
+
 
 fn main() {
 
 
     let matrix = CoOccurrenceMatrix::from_elements(
-        vec![vec![1, 1],
-                  vec![0, 3]]
+        vec![vec![1, 2],
+                  vec![3, 4]]
     );
 
-    println!("{}", matrix);
-    println!("{:?}", matrix.get_sums());
+    let matrix_sums = matrix.get_sums();
+    let primes = get_primes_until(matrix_sums.total_sum);
+
+
+    println!("matrix = {}", matrix);
+    println!("sums = {:?}", matrix.get_sums());
 
     let vin = VIN::from_CoOccurrenceMatrix(&matrix);
-    println!("{}", vin);
+    println!("vin.powers = {:?}", vin.powers);
+    println!("vin = {}", vin);
+
+    let vip = VIP::from_VIN(&vin);
+    println!("vip.powers = {:?}", vip.powers);
+    println!("vip = {}", vip);
+
+    //   2   3   5
+    // [-0, -1, -0]
 
 
 }
