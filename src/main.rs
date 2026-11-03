@@ -32,26 +32,13 @@ fn get_primes_until(n: i32) -> Vec<i32> {
     primes
 }
 
-fn add_elementwise_to_int_vector(vec_a: &mut Vec<i32>, vec_b: &Vec<i32>) -> () {
-    // vec_a += vec_b
-    for i in 0..vec_a.len() {
-        vec_a[i] += vec_b[i];
-    }
-}
+// fn add_elementwise_to_int_vector(vec_a: &mut Vec<i32>, vec_b: &Vec<i32>) -> () {
+//     // vec_a += vec_b
+//     for i in 0..vec_a.len() {
+//         vec_a[i] += vec_b[i];
+//     }
+// }
 
-fn incr_first_n_of_int_vector(vec_a: &mut Vec<i32>, n: i32) -> () {
-    // increments the first n items of the vector
-    for i in 0..n {
-        vec_a[i as usize] += 1;
-    }
-}
-
-fn decr_first_n_of_int_vector(vec_a: &mut Vec<i32>, n:i32) -> () {
-    // decrements the first n
-    for i in 0..n {
-        vec_a[i as usize] -= 1;
-    }
-}
 
 
 
@@ -80,6 +67,11 @@ impl CoOccurrenceMatrix {
             n_cols: rows[0].len(),
             rows: rows
         }
+    }
+
+    fn get_biggest_value(&self) -> i32 {
+        //if there is NOT A SINGLE VALUE, let it panic.
+        *self.rows.iter().flatten().max().unwrap()
     }
 
     fn get_sums(&self) -> SumsForCoOccurrenceMatrix {
@@ -115,19 +107,95 @@ impl fmt::Display for CoOccurrenceMatrix {
     }
 }
 
-fn main() {
-    for n in 0..20 {
-        let primes_until_n = get_primes_until(n);
-        println!("Primes until {} are {:?}", n, primes_until_n);
+
+struct VIN {
+    // VIN = Vec of i32, interpret as power of Naturals
+    // the first item is the power of 2.
+    powers: Vec<i32>,
+}
+
+impl VIN {
+
+    fn zeros(capacity: usize) -> VIN {
+        VIN{powers: vec![0; capacity]}
     }
 
+    fn multiply_by_n_factorial(&mut self, n: i32) -> () {
+        if n < 1 {
+            panic!("Cannot call multiply_by_n_factorial({})", n);
+        }
+        // increments the first n items of the vector
+        for i in 0..(n-1) {
+            self.powers[i as usize] += 1;
+        }
+    }
+
+    fn divide_by_n_factorial(&mut self, n:i32) -> () {
+        if n < 1 {
+            panic!("Cannot call divide_by_n_factorial({})", n);
+        }
+        // decrements the first n
+        for i in 0..(n-1) {
+            self.powers[i as usize] -= 1;
+        }
+    }
+
+    fn from_CoOccurrenceMatrix(matrix: &CoOccurrenceMatrix) -> VIN {
+        // I should say somewhere that this is where Fisher's exact formula is
+        let sums = matrix.get_sums();
+        let mut vin = VIN::zeros((sums.total_sum-1) as usize);
+        // product of row sums! divided by ((product of col sums!) * total_sum!)
+
+        // multiply by row sums
+        for &row_sum in sums.row_sums.iter() {
+            vin.multiply_by_n_factorial(row_sum);
+        }
+
+        for &col_sum in sums.col_sums.iter() {
+            vin.divide_by_n_factorial(col_sum);
+        }
+        vin.divide_by_n_factorial(sums.total_sum);
+        vin
+    }
+}
+
+impl fmt::Display for VIN {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut numerator = 1;
+        let mut denominator = 1;
+        for (index, &power) in self.powers.iter().enumerate() {
+            if power != 0 {
+                let natural = index + 2;
+                if power > 0 {
+                    for _ in 0..power {
+                        numerator *= natural;
+                    }
+                }
+                else {
+                    for _ in 0..(-1*power) {
+                        denominator *= natural;
+                    }
+                }
+            }
+        }
+        writeln!(f, "{}/{}", numerator, denominator)
+    }
+}
+
+
+fn main() {
+
+
     let matrix = CoOccurrenceMatrix::from_elements(
-        vec![vec![1, 2],
-                  vec![3, 6]]
+        vec![vec![1, 1],
+                  vec![0, 3]]
     );
 
     println!("{}", matrix);
     println!("{:?}", matrix.get_sums());
+
+    let vin = VIN::from_CoOccurrenceMatrix(&matrix);
+    println!("{}", vin);
 
 
 }
