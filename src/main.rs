@@ -1,5 +1,17 @@
 // This will be a simple script to calculate Fisher's Exact test.
+// See this page for more information:
+//      https://peterstatistics.com/Terms/Tests/FisherExactTest.html
+// In short: Fisher's test is for 2x2, and Fisher-Freeman-Halton is for the nxm case.
 
+
+// This is tricky to calculate because it requires huge factorials,
+// that very quickly break IEEE754 ranges.
+// The annoying part is that the end result is a division between HUGE numbers,
+// and it should be in range [0,1].
+// Yes, we could use logs and stuff like that, but we lose a lot of precision...
+// so we use symbolic exact computation.
+
+use std::cmp::max;
 use std::fmt;
 use std::fmt::Display;
 use std::path::Component::ParentDir;
@@ -45,26 +57,28 @@ fn get_primes_until(n: i32) -> Vec<i32> {
 
 
 
-struct CoOccurrenceMatrix {
+struct ContingencyMatrix {
     n_rows: usize,
     n_cols: usize,
     rows: Vec<Vec<i32>>,
 }
 
 #[derive(Debug)]
-struct SumsForCoOccurrenceMatrix {
+struct SumsForContingencyMatrix {
     row_sums: Vec<i32>,
     col_sums: Vec<i32>,
     total_sum: i32,
 }
 
-impl CoOccurrenceMatrix {
-    fn from_elements(rows: Vec<Vec<i32>>) -> CoOccurrenceMatrix {
+
+
+impl ContingencyMatrix {
+    fn from_elements(rows: Vec<Vec<i32>>) -> ContingencyMatrix {
         if rows.len() == 0 {
-            return CoOccurrenceMatrix{n_rows: 0, n_cols: 0, rows: Vec::new()}
+            return ContingencyMatrix {n_rows: 0, n_cols: 0, rows: Vec::new()}
         }
 
-        CoOccurrenceMatrix{
+        ContingencyMatrix {
             n_rows: rows.len(),
             n_cols: rows[0].len(),
             rows: rows
@@ -76,8 +90,8 @@ impl CoOccurrenceMatrix {
         *self.rows.iter().flatten().max().unwrap()
     }
 
-    fn get_sums(&self) -> SumsForCoOccurrenceMatrix {
-        let mut result = SumsForCoOccurrenceMatrix {
+    fn get_sums(&self) -> SumsForContingencyMatrix {
+        let mut result = SumsForContingencyMatrix {
             row_sums: vec![0; self.n_rows],
             col_sums: vec![0; self.n_cols],
             total_sum: 0,
@@ -96,7 +110,7 @@ impl CoOccurrenceMatrix {
     }
 }
 
-impl fmt::Display for CoOccurrenceMatrix {
+impl fmt::Display for ContingencyMatrix {
 
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for row in self.rows.iter() {
@@ -146,7 +160,7 @@ impl VIN {
         }
     }
 
-    fn from_CoOccurrenceMatrix(matrix: &CoOccurrenceMatrix) -> VIN {
+    fn from_CoOccurrenceMatrix(matrix: &ContingencyMatrix) -> VIN {
         // I should say somewhere that this is where Fisher's exact formula is
         let sums = matrix.get_sums();
         let mut vin = VIN::zeros((sums.total_sum-1) as usize);
@@ -295,10 +309,13 @@ impl VIP {
 }
 
 
+
+
+
 fn main() {
 
 
-    let matrix = CoOccurrenceMatrix::from_elements(
+    let matrix = ContingencyMatrix::from_elements(
         vec![vec![0, 10],
                   vec![12, 2]]
     );
