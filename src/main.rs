@@ -14,7 +14,7 @@
 mod contingency_matrix;
 mod product_of_factors;
 
-
+#[allow(dead_code)]
 fn get_primes_until(n: i32) -> Vec<i32> {
     // Implements a Sieve of Eratostenes
     if n < 1 {
@@ -65,22 +65,32 @@ fn main() {
 
 
     let matrix = contingency_matrix::ContingencyMatrix::from_elements(
-        vec![vec![0, 10],
-                  vec![12, 2]]
+        vec![vec![1, 1, 1],
+                  vec![1, 1, 1],
+                  vec![1, 1, 1],
+        ]
     );
 
-    println!("matrix = \n4{}", matrix);
-    println!("sums = {:?}", matrix.get_sums());
+    println!("matrix = \n{}", matrix);
+    let sums = matrix.get_sums();
+    println!("sums = {:?}", sums);
 
-    let vin = product_of_factors::VIN::from_contingency_matrix(&matrix);
-    println!("vin.powers = {:?}", vin.powers);
-    println!("vin = {}", vin);
+    let same_sum = sums.get_all_matching_contingency_tables();
+    println!("There are {} tables with the same sum", same_sum.len());
 
-    let vip = product_of_factors::VIP::from_VIN(&vin);
-    println!("vip.powers = {:?}", vip.powers);
-    println!("vip = {}", vip);
+    for table in same_sum.iter() {
+        println!("{}", table);
+    }
 
-    println!("as float = {}", vip.as_f64());
+    // let vin = product_of_factors::VIN::from_contingency_matrix(&matrix);
+    // println!("vin.powers = {:?}", vin.powers);
+    // println!("vin = {}", vin);
+    //
+    // let vip = product_of_factors::VIP::from_VIN(&vin);
+    // println!("vip.powers = {:?}", vip.powers);
+    // println!("vip = {}", vip);
+    //
+    // println!("as float = {}", vip.as_f64());
 
 
 

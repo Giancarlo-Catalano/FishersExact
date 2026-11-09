@@ -2,6 +2,7 @@ use std::fmt;
 use std::fmt::Display;
 use crate::{contingency_matrix, get_primes_until};
 
+#[allow(dead_code)]
 pub(crate) struct VIN {
     // VIN = Vec of i32, interpret as power of Naturals
     // the first item is the power of 2.
@@ -10,14 +11,17 @@ pub(crate) struct VIN {
 
 impl VIN {
 
+    #[allow(dead_code)]
     fn zeros(capacity: usize) -> VIN {
         VIN{powers: vec![0; capacity]}
     }
 
+    #[allow(dead_code)]
     fn max_base_inclusive(&self) -> i32 {
         return (self.powers.len() as i32 ) + 1;
     }
 
+    #[allow(dead_code)]
     fn multiply_by_n_factorial(&mut self, n: i32) -> () {
         if n < 1 {
             panic!("Cannot call multiply_by_n_factorial({})", n);
@@ -28,6 +32,7 @@ impl VIN {
         }
     }
 
+    #[allow(dead_code)]
     fn divide_by_n_factorial(&mut self, n:i32) -> () {
         if n < 1 {
             panic!("Cannot call divide_by_n_factorial({})", n);
@@ -38,6 +43,7 @@ impl VIN {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn from_contingency_matrix(matrix: &contingency_matrix::ContingencyMatrix) -> VIN {
         // I should say somewhere that this is where Fisher's exact formula is
         let sums = matrix.get_sums();
@@ -88,6 +94,7 @@ impl fmt::Display for VIN {
     }
 }
 
+#[allow(dead_code)]
 pub(crate) struct VIP {
     // vector of integers, these being powers of primes
     // the first prime is 2
@@ -120,7 +127,9 @@ impl Display for VIP {
 }
 
 impl VIP {
-    pub(crate) fn from_VIN(vin: &VIN) -> VIP {
+
+    #[allow(dead_code)]
+    pub(crate) fn from_vin(vin: &VIN) -> VIP {
         // first, we calculate what primes we need
         let primes = get_primes_until(vin.max_base_inclusive());
         let mut vip = VIP{
@@ -148,10 +157,11 @@ impl VIP {
         vip
     }
 
+    #[allow(dead_code)]
     pub(crate) fn as_f64(&self) -> f64 {
         // we need to be careful to avoid overflows.
         // these two are lists of (prime, power)
-        let (mut mult_by, mut div_by) = {
+        let (mult_by, div_by) = {
             let mut temp_mult_pairs : Vec<(i32, i32)> = Vec::new();
             let mut temp_div_pairs : Vec<(i32, i32)> = Vec::new();
 
