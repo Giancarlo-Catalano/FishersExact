@@ -14,10 +14,6 @@
 mod contingency_matrix;
 mod product_of_factors;
 
-use std::cmp::max;
-use std::fmt;
-use std::fmt::Display;
-use std::path::Component::ParentDir;
 
 fn get_primes_until(n: i32) -> Vec<i32> {
     // Implements a Sieve of Eratostenes
@@ -32,14 +28,14 @@ fn get_primes_until(n: i32) -> Vec<i32> {
     is_prime_boolean_array[1] = false;
 
 
-    let mut primes: Vec::<i32> = Vec::new();
+    let mut primes: Vec<i32> = Vec::new();
 
     for i in 0..=n {
         let is_prime = is_prime_boolean_array[i as usize];
         if !is_prime {
             continue;
         }
-        primes.push(i as i32); // must be a prime
+        primes.push(i); // must be a prime
         // we then mark every multiple of i as a non-integer
         // we start from i * i, until i * (n/i). Call that multiplier k
         for k in i..=(n/i) {
@@ -72,10 +68,6 @@ fn main() {
         vec![vec![0, 10],
                   vec![12, 2]]
     );
-
-    let matrix_sums = matrix.get_sums();
-    let primes = get_primes_until(matrix_sums.total_sum);
-
 
     println!("matrix = \n4{}", matrix);
     println!("sums = {:?}", matrix.get_sums());
