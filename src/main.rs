@@ -11,6 +11,9 @@
 // Yes, we could use logs and stuff like that, but we lose a lot of precision...
 // so we use symbolic exact computation.
 
+mod contingency_matrix;
+mod product_of_factors;
+
 use std::cmp::max;
 use std::fmt;
 use std::fmt::Display;
@@ -57,72 +60,6 @@ fn get_primes_until(n: i32) -> Vec<i32> {
 
 
 
-struct ContingencyMatrix {
-    n_rows: usize,
-    n_cols: usize,
-    rows: Vec<Vec<i32>>,
-}
-
-#[derive(Debug)]
-struct SumsForContingencyMatrix {
-    row_sums: Vec<i32>,
-    col_sums: Vec<i32>,
-    total_sum: i32,
-}
-
-
-
-impl ContingencyMatrix {
-    fn from_elements(rows: Vec<Vec<i32>>) -> ContingencyMatrix {
-        if rows.len() == 0 {
-            return ContingencyMatrix {n_rows: 0, n_cols: 0, rows: Vec::new()}
-        }
-
-        ContingencyMatrix {
-            n_rows: rows.len(),
-            n_cols: rows[0].len(),
-            rows: rows
-        }
-    }
-
-    fn get_biggest_value(&self) -> i32 {
-        //if there is NOT A SINGLE VALUE, let it panic.
-        *self.rows.iter().flatten().max().unwrap()
-    }
-
-    fn get_sums(&self) -> SumsForContingencyMatrix {
-        let mut result = SumsForContingencyMatrix {
-            row_sums: vec![0; self.n_rows],
-            col_sums: vec![0; self.n_cols],
-            total_sum: 0,
-        };
-
-        for (row_index, row) in self.rows.iter().enumerate() {
-            let mut row_sum = 0;
-            for (col_index, item) in row.iter().enumerate() {
-                row_sum += item;
-                result.col_sums[col_index]+=item;
-            }
-            result.row_sums[row_index] = row_sum;
-            result.total_sum += row_sum;
-        }
-        result
-    }
-}
-
-impl fmt::Display for ContingencyMatrix {
-
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for row in self.rows.iter() {
-            for item in row.iter() {
-                write!(f, "{}\t", item)?;
-            }
-            writeln!(f, "")?;
-        }
-        Ok(())
-    }
-}
-
 
 struct VIN {
     // VIN = Vec of i32, interpret as power of Naturals
@@ -160,7 +97,7 @@ impl VIN {
         }
     }
 
-    fn from_CoOccurrenceMatrix(matrix: &ContingencyMatrix) -> VIN {
+    fn from_contingency_matrix(matrix: &contingency_matrix::ContingencyMatrix) -> VIN {
         // I should say somewhere that this is where Fisher's exact formula is
         let sums = matrix.get_sums();
         let mut vin = VIN::zeros((sums.total_sum-1) as usize);
@@ -315,7 +252,7 @@ impl VIP {
 fn main() {
 
 
-    let matrix = ContingencyMatrix::from_elements(
+    let matrix = contingency_matrix::ContingencyMatrix::from_elements(
         vec![vec![0, 10],
                   vec![12, 2]]
     );
@@ -327,7 +264,7 @@ fn main() {
     println!("matrix = \n4{}", matrix);
     println!("sums = {:?}", matrix.get_sums());
 
-    let vin = VIN::from_CoOccurrenceMatrix(&matrix);
+    let vin = VIN::from_contingency_matrix(&matrix);
     println!("vin.powers = {:?}", vin.powers);
     println!("vin = {}", vin);
 
