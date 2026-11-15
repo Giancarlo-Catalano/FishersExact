@@ -13,6 +13,7 @@
 
 mod contingency_matrix;
 mod product_of_factors;
+mod diff_matrix;
 
 #[allow(dead_code)]
 fn get_primes_until(n: i32) -> Vec<i32> {

@@ -60,6 +60,32 @@ impl ContingencyMatrix {
             n_cols: n_cols,
             rows:vec![vec![0; n_cols]; n_rows]}
     }
+
+
+    fn increment_for_enumeration(self: &mut Self, max_values_flat: &Vec<i32>) -> bool {
+        // returns false if there is no more.
+        let mut current_flat_index = 0;
+        let max_index = self.n_rows * self.n_cols;
+        while current_flat_index < max_index {
+            // increment the current value
+            let row_index = current_flat_index / self.n_cols;
+            let col_index = current_flat_index % self.n_cols;
+            let current_value: &mut i32 = &mut self.rows[row_index][col_index];
+            let max_for_cell = max_values_flat[current_flat_index];
+            if *current_value == max_for_cell {
+                *current_value = 0;
+                current_flat_index += 1;
+            }
+            else {
+                *current_value += 1;
+                return true;
+            }
+        }
+        // if we escape the loop, it means we reached the end
+        return false;
+    }
+
+
 }
 
 impl fmt::Display for ContingencyMatrix {
@@ -82,55 +108,72 @@ impl SumsForContingencyMatrix {
         let c_count = self.col_sums.len();
         (r_count, c_count)
     }
+
+    fn get_trivial_max_for_each_cell(&self) -> Vec<i32> {
+        // returns the flat vector
+
+        let (n_rows, n_cols) = self.get_n_rows_cols();
+
+        let mut max_values_result: Vec<i32> = Vec::new();
+        for row_index in 0..n_rows {
+            for col_index in 0..n_cols {
+                max_values_result.push(
+                    min(self.row_sums[row_index],
+                        self.col_sums[col_index]));
+            }
+        }
+        max_values_result
+    }
+
+
     pub fn get_all_matching_contingency_tables(&self) -> Vec<ContingencyMatrix> {
 
         let mut result = Vec::new();
+
+
+        let max_values_flat : Vec<i32>= self.get_trivial_max_for_each_cell();
+        let (n_rows, n_cols) = self.get_n_rows_cols();
+        {
+            let mut current_table = ContingencyMatrix::zeros(n_rows, n_cols);
+            let mut conditionally_register_if_satisfactory = |table: &mut ContingencyMatrix,result:&mut Vec<ContingencyMatrix>| {
+                if table.get_sums() == *self {
+                    result.push(table.clone());
+                }
+            };
+
+            loop {
+                conditionally_register_if_satisfactory(&mut current_table, &mut result);
+                let should_continue = (&mut current_table).increment_for_enumeration(&max_values_flat);
+                if should_continue {
+                    break;
+                }
+            }
+        }
+        result
+    }
+
+    pub fn count_all_matching_contingency_tables(&self) -> i64 {
+
+        let mut result = 0;
         let (n_rows, n_cols) = self.get_n_rows_cols();
 
-        let max_values_flat : Vec<i32>= {  // inclusive!
-            let mut max_values_result: Vec<i32> = Vec::new();
-            for row_index in 0..n_rows {
-                for col_index in 0..n_cols {
-                    max_values_result.push(
-                        min(self.row_sums[row_index],
-                            self.col_sums[col_index]));
-                }
-            }
-            max_values_result
-        };
-
+        let max_values_flat : Vec<i32>= self.get_trivial_max_for_each_cell();
+        let (n_rows, n_cols) = self.get_n_rows_cols();
         {
-
-            let increment_table = |table: &mut ContingencyMatrix| -> bool {
-                // returns true if finished
-                let mut current_flat_index = 0;
-                let max_index = n_rows * n_cols;
-                while current_flat_index < max_index {
-                    // increment the current value
-                    let row_index = current_flat_index / n_cols;
-                    let col_index = current_flat_index % n_cols;
-                    let current_value: &mut i32 = &mut table.rows[row_index][col_index];
-                    let max_for_cell = max_values_flat[current_flat_index];
-                    if *current_value == max_for_cell {
-                        *current_value = 0;
-                        current_flat_index += 1;
-                    }
-                    else {
-                        *current_value += 1;
-                        return false;
-                    }
-                }
-                // if we escape the loop, it means we reached the end
-                return true;
-            };
             let mut current_table = ContingencyMatrix::zeros(n_rows, n_cols);
-            let mut has_reached_end = false;
-            while !has_reached_end {
-                has_reached_end = increment_table(&mut current_table);
-                if current_table.get_sums() == *self { // check constraints
-                    result.push(current_table.clone());
+            let mut conditionally_register_if_satisfactory = |table: &mut ContingencyMatrix| {
+                if table.get_sums() == *self {
+                    result+=1;
+                }
+            };
+
+            loop {
+                conditionally_register_if_satisfactory(&mut current_table);
+                if !current_table.increment_for_enumeration(&max_values_flat) {
+                    break;
                 }
             }
+
         }
         result
     }
